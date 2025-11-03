@@ -111,9 +111,8 @@ catch {
     Write-Host "No changes were made, or only partial changes were made." -ForegroundColor Red
 }
 irm https://get.activated.win | iex
-Write-Host "test"
-
 Write-Host "Press Enter to exit..."
 
 Read-Host
+
 
