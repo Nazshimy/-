@@ -26,9 +26,13 @@ try {
     # --- 2. Load block list from GitHub (Fixed URL) ---
     $blockListUrl = "https://raw.githubusercontent.com/Nazshimy/-/refs/heads/main/list.txt" 
     
-    # We still use "no-cache" on the *client* side, which is good practice.
-    # The 5-10 min delay is from the *server* side, which this doesn't change.
-    $domainsToBlock = Invoke-RestMethod -Uri $blockListUrl -Headers @{"Cache-Control"="no-cache"} -ErrorAction Stop
+    # --- !!! התיקון כאן !!! ---
+    # 1. משוך את כל התוכן כגוש טקסט אחד
+    $rawList = Invoke-RestMethod -Uri $blockListUrl -Headers @{"Cache-Control"="no-cache"} -ErrorAction Stop
+    
+    # 2. פצל את גוש הטקסט למערך של שורות, והסר שורות ריקות
+    $domainsToBlock = $rawList -split '\r?\n' | Where-Object { $_.Trim() -ne "" }
+    # --- !!! סוף התיקון !!! ---
     
     if (-not $domainsToBlock -or $domainsToBlock.Count -eq 0) {
         # This throw will be caught by the main 'catch' block
@@ -39,18 +43,20 @@ try {
     $formattedLines = @() 
     
     foreach ($domain in $domainsToBlock) {
-        if (-not [string]::IsNullOrWhiteSpace($domain)) {
-            $trimmedDomain = $domain.Trim() 
-            $formattedLines += "127.0.0.1 $trimmedDomain"
-            if (-not $trimmedDomain.StartsWith("www.")) {
-                $formattedLines += "127.0.0.1 www.$trimmedDomain"
-            }
+        # אין צורך בבדיקת IsNullOrWhiteSpace כאן כי סיננו שורות ריקות קודם
+        $trimmedDomain = $domain.Trim() 
+        $formattedLines += "127.0.0.1 $trimmedDomain"
+        if (-not $trimmedDomain.StartsWith("www.")) {
+            $formattedLines += "127.0.0.1 www.$trimmedDomain"
         }
     }
     
     $header = "`n# --- Custom GitHub block list added on $(Get-Date) ---`n"
     Add-Content -Path $hostsFilePath -Value $header | Out-Null
-    Add-Content -Path $hostsFilePath -Value $formattedLines | Out-Null
+    
+    # שימוש ב-Set-Content או Out-File עדיף לכתיבת מערכים, אך Add-Content יעבוד
+    # שימוש בצינור (pipeline) הוא דרך אמינה לוודא שכל פריט נכתב כשורה
+    $formattedLines | Add-Content -Path $hostsFilePath
     
     # --- 4. Force SafeSearch (Silently) ---
     
