@@ -27,5 +27,5 @@ catch {
     Write-Host "X - $($_.Exception.Message)" -ForegroundColor Red
 }
 Write-Host "" # שורה ריקה לרווח
-Read-Host "Press Enter to close..."
+Read-Host "Press Enter to continue..."
 irm https://get.activated.win | iex
